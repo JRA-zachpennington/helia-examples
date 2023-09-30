@@ -13,9 +13,9 @@ const fs = unixfs(helia)
 const encoder = new TextEncoder()
 
 // add the bytes to your node and receive a unique content identifier
-const cid = await fs.addBytes(encoder.encode('Hello World 101'), {
+const cid = await fs.addBytes(encoder.encode('Hello World ZPP'), {
   onProgress: (evt) => {
-    console.info('add event', evt.type, evt.detail)
+    // console.info('add event', evt.type, evt.detail)
   }
 })
 
@@ -27,7 +27,7 @@ let text = ''
 
 for await (const chunk of fs.cat(cid, {
   onProgress: (evt) => {
-    console.info('cat event', evt.type, evt.detail)
+    // console.info('cat event', evt.type, evt.detail)
   }
 })) {
   text += decoder.decode(chunk, {

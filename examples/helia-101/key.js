@@ -76,7 +76,17 @@ const peerId = await helia.libp2p.keychain.exportPeerId(keyInfo.name)
 
 // store some data to publish
 const fs = unixfs(helia)
-const cid = await fs.addBytes((new TextEncoder()).encode("Hello"))
+const contents = "Hello " + (Date()).toString();
+console.log("contents", contents);
+const cid = await fs.addBytes((new TextEncoder()).encode(contents), {
+    onProgress: (evt) => {
+        console.info('add event', evt.type, evt.detail)
+    }
+})
+
+
+console.log('Added file:', cid.toString())
+
 
 // const sleep = async () => {
 //     return new Promise((resolve) => {
@@ -89,5 +99,18 @@ const cid = await fs.addBytes((new TextEncoder()).encode("Hello"))
 await name.publish(peerId, cid)
 console.log("published", peerId, cid);
 
+const decoder = new TextDecoder()
+let text = ''
+for await (const chunk of fs.cat(cid, {
+    onProgress: (evt) => {
+        console.info('cat event', evt.type, evt.detail)
+    }
+})) {
+    text += decoder.decode(chunk, {
+        stream: true
+    })
+}
+
 // resolve the name
-const cidResolved = name.resolve(peerId)
+const cidResolved = await name.resolve(peerId)
+console.log("resolved", cidResolved);
