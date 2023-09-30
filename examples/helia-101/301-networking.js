@@ -10,8 +10,10 @@ import { MemoryDatastore } from 'datastore-core'
 import { createHelia } from 'helia'
 import { createLibp2p } from 'libp2p'
 import { identifyService } from 'libp2p/identify'
+import { multiaddr } from '@multiformats/multiaddr'
 
-async function createNode () {
+
+async function createNode() {
   // the blockstore is where we store the blocks that make up files
   const blockstore = new MemoryBlockstore()
 
@@ -38,10 +40,7 @@ async function createNode () {
     peerDiscovery: [
       bootstrap({
         list: [
-          '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
-          '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
-          '/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
-          '/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt'
+          '/dns4/webrtc-star.discovery.libp2p.io/tcp/443/wss/p2p-webrtc-star'
         ]
       })
     ],
@@ -63,7 +62,13 @@ const node2 = await createNode()
 
 // connect them together
 const multiaddrs = node2.libp2p.getMultiaddrs()
+console.log("getMultiaddrs", multiaddrs);
 await node1.libp2p.dial(multiaddrs[0])
+await node1.libp2p.dial(multiaddr("/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWJhn8WgABUDtPm954sYF3jLJc8oy2tjfm1Pt31wZc8kzV"));
+await node2.libp2p.dial(multiaddr("/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWJhn8WgABUDtPm954sYF3jLJc8oy2tjfm1Pt31wZc8kzV"));
+
+const peers = node1.libp2p.getPeers();
+console.log("peers", peers);
 
 // create a filesystem on top of Helia, in this case it's UnixFS
 const fs = unixfs(node1)
@@ -72,7 +77,7 @@ const fs = unixfs(node1)
 const encoder = new TextEncoder()
 
 // add the bytes to your node and receive a unique content identifier
-const cid = await fs.addBytes(encoder.encode('Hello World 301'))
+const cid = await fs.addBytes(encoder.encode('Hello World ZPP@'))
 
 console.log('Added file:', cid.toString())
 
@@ -85,6 +90,17 @@ let text = ''
 
 // use the second Helia node to fetch the file from the first Helia node
 for await (const chunk of fs2.cat(cid)) {
+  text += decoder.decode(chunk, {
+    stream: true
+  })
+}
+
+console.log('Fetched file contents:', text)
+
+
+text = ''
+// use the second Helia node to fetch the file from the first Helia node
+for await (const chunk of fs2.cat("QmVQi48ntcJAEndqoDb24QyYEYhKmUZaHK9n8ECUhTtwzF")) {
   text += decoder.decode(chunk, {
     stream: true
   })
